@@ -1,0 +1,37 @@
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Env & secrets
+.env
+.env.*
+!.env.example
+!**/.env.example
+
+# Dependencies & builds
+node_modules/
+vendor/
+frontend/.next/
+frontend/out/
+backend/public/build/
+backend/public/hot/
+backend/public/storage
+backend/storage/*.key
+backend/storage/pail
+backend/bootstrap/cache/*.php
+!backend/bootstrap/cache/.gitignore
+
+# Logs / caches
+npm-debug.log*
+yarn-error.log*
+.phpunit.result.cache
+.phpactor.json
+auth.json
+
+# Deploy tooling
+.vercel/
+.supabase/
