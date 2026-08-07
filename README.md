@@ -108,8 +108,41 @@ Useful public endpoints:
 - **instructor** — courses, quizzes, media, enrollments view, blog authoring
 - **student** — learner on the public site (My Learning, take quizzes, certificates); no admin panel access
 
+## Deploy
+
+| Layer | Service | Account / notes |
+|-------|---------|-----------------|
+| Frontend | [Vercel](https://edulms-school.vercel.app) | `39479@sjc.ac.th` — project `edulms-school`, root `frontend/` |
+| Source | [GitHub](https://github.com/Thanitasjc/edulms-school) | `Thanitasjc` |
+| Database | Supabase Postgres | Use account `thanitabackup01@gmail.com` → Project Settings → Database |
+| API | Laravel host (not Vercel) | Point `DB_*` at Supabase; set `FRONTEND_URL` + CORS to the Vercel domain |
+
+### Vercel env (frontend)
+
+```
+NEXT_PUBLIC_API_URL=https://YOUR-API-HOST/api/v1
+NEXT_PUBLIC_APP_URL=https://edulms-school.vercel.app
+```
+
+### Supabase → Laravel `.env`
+
+```
+DB_CONNECTION=pgsql
+DB_HOST=db.<PROJECT_REF>.supabase.co
+DB_PORT=5432
+DB_DATABASE=postgres
+DB_USERNAME=postgres
+DB_PASSWORD=<DATABASE_PASSWORD>
+DB_SSLMODE=require
+FRONTEND_URL=https://edulms-school.vercel.app
+CORS_ALLOWED_ORIGINS=https://edulms-school.vercel.app
+```
+
+Then on the API host: `php artisan migrate --seed`.
+
 ## Next Feature Priority
 
-1. Payment gateway (checkout currently enrolls without charge)
-2. Lesson module (standalone) if curriculum outgrows JSON on course
-3. Notifications / reports
+1. Host Laravel API + connect Supabase Postgres
+2. Payment gateway (checkout currently enrolls without charge)
+3. Lesson module (standalone) if curriculum outgrows JSON on course
+4. Notifications / reports
