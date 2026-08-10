@@ -4,6 +4,7 @@ use App\Core\Http\Middleware\EnsureModuleEnabled;
 use App\Core\Http\Middleware\ForceJsonResponse;
 use App\Core\Http\Middleware\OptionalSanctumAuth;
 use App\Core\Http\Middleware\ResolveTenant;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -12,6 +13,7 @@ use Spatie\Permission\Middleware\PermissionMiddleware;
 use Spatie\Permission\Middleware\RoleMiddleware;
 use Spatie\Permission\Middleware\RoleOrPermissionMiddleware;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -48,6 +50,14 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(function (Throwable $e, Request $request) {
             if (! $request->is('api/*') && ! $request->expectsJson()) {
                 return null;
+            }
+
+            if ($e instanceof ModelNotFoundException || $e instanceof NotFoundHttpException) {
+                return response()->json([
+                    'success' => false,
+                    'message' => __('api.not_found'),
+                    'code' => 'NotFound',
+                ], 404);
             }
 
             $status = $e instanceof HttpExceptionInterface ? $e->getStatusCode() : 500;
