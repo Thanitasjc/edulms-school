@@ -8,6 +8,7 @@ return [
     'restored' => 'Restored successfully',
     'server_error' => 'Server Error',
     'http_error' => 'HTTP Error',
+    'not_found' => 'Resource not found.',
     'welcome' => 'Enterprise LMS API',
 
     'auth' => [

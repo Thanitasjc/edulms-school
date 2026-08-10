@@ -11,6 +11,7 @@ Thumbs.db
 .env.*
 !.env.example
 !**/.env.example
+backend/.env.render
 
 # Dependencies & builds
 node_modules/

@@ -46,8 +46,10 @@ export default function BlogDetailPage() {
         <PageBreadcrumb title="Blog Details" items={[{ label: "Blog", href: "/blog" }, { label: "Not found" }]} />
         <div className="mx-auto w-full max-w-4xl px-4 py-14 text-center sm:px-6 lg:px-8">
           <p className="text-lg font-semibold text-slate-900 dark:text-white">Post not found</p>
-          <p className="mt-2 text-sm text-red-500">
-            {error instanceof ApiClientError ? error.message : "This blog post could not be loaded."}
+          <p className="mt-2 text-sm text-slate-500">
+            {error instanceof ApiClientError && error.status !== 404
+              ? error.message
+              : "This blog post does not exist or is no longer published."}
           </p>
           <Link href="/blog" className="mt-6 inline-flex text-sm font-medium text-blue-600 hover:underline">
             Back to blog
