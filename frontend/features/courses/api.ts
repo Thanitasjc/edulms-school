@@ -1,4 +1,4 @@
-import { apiClient } from "@/lib/api-client";
+import { apiClient, getApiBaseUrl } from "@/lib/api-client";
 import { getStoredCompanyId, getStoredToken } from "@/features/auth/api";
 import type { AdminCourse, CourseFormInput } from "./schemas";
 
@@ -73,7 +73,6 @@ export async function uploadCourseImage(file: File) {
 }
 
 async function uploadCourseMedia(file: File, path: string) {
-  const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
   const headers = new Headers();
   headers.set("Accept", "application/json");
   const token = getStoredToken();
@@ -84,7 +83,7 @@ async function uploadCourseMedia(file: File, path: string) {
   const formData = new FormData();
   formData.append("file", file);
 
-  const response = await fetch(`${API_URL}${path}`, {
+  const response = await fetch(`${getApiBaseUrl()}${path}`, {
     method: "POST",
     headers,
     body: formData,

@@ -43,15 +43,18 @@ async function fetchCourses(tab: string) {
   }
 
   const response = await apiClient<PublicCourse[]>(`/public/courses?${query.toString()}`);
-  return response.data;
+  return Array.isArray(response.data) ? response.data : [];
 }
 
 export function FeaturedCoursesSection() {
   const [activeTab, setActiveTab] = useState<(typeof tabs)[number]["key"]>("all");
 
-  const { data = [], isLoading, isError } = useQuery({
+  const { data = [], isLoading, isError, isFetching, refetch } = useQuery({
     queryKey: ["public-courses", activeTab],
     queryFn: () => fetchCourses(activeTab),
+    // Render free tier can take 30–60s to wake; mobile networks often abort once.
+    retry: 4,
+    retryDelay: (attempt) => Math.min(1500 * 2 ** attempt, 12000),
   });
 
   const title = useMemo(() => "Explore Featured Courses", []);
@@ -88,19 +91,33 @@ export function FeaturedCoursesSection() {
           </div>
         </div>
 
-        {isLoading ? (
-          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-            {Array.from({ length: 3 }).map((_, index) => (
-              <div
-                key={index}
-                className="h-[420px] animate-pulse rounded-[1.75rem] bg-white dark:bg-slate-900"
-              />
-            ))}
+        {isLoading || (isFetching && data.length === 0) ? (
+          <div className="space-y-4">
+            <p className="text-center text-sm text-slate-500">
+              กำลังโหลดคอร์ส… หาก API พักอยู่ อาจใช้เวลาสักครู่
+            </p>
+            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+              {Array.from({ length: 3 }).map((_, index) => (
+                <div
+                  key={index}
+                  className="h-[420px] animate-pulse rounded-[1.75rem] bg-white dark:bg-slate-900"
+                />
+              ))}
+            </div>
           </div>
         ) : isError ? (
           <div className="rounded-[1.75rem] border border-dashed border-slate-300 bg-white px-6 py-16 text-center dark:border-white/15 dark:bg-slate-900">
             <p className="font-medium text-slate-900 dark:text-white">ไม่สามารถโหลดคอร์สได้</p>
-            <p className="mt-2 text-sm text-slate-500">กรุณาตรวจสอบการเชื่อมต่อ API แล้วลองใหม่</p>
+            <p className="mt-2 text-sm text-slate-500">
+              การเชื่อมต่อ API ล่าช้าหรือหลุดชั่วคราว — ลองใหม่อีกครั้ง
+            </p>
+            <button
+              type="button"
+              onClick={() => void refetch()}
+              className="mt-5 inline-flex h-10 items-center justify-center rounded-full bg-blue-600 px-5 text-sm font-medium text-white transition hover:bg-blue-500"
+            >
+              ลองใหม่
+            </button>
           </div>
         ) : data.length === 0 ? (
           <div className="rounded-[1.75rem] border border-dashed border-slate-300 bg-white px-6 py-16 text-center dark:border-white/15 dark:bg-slate-900">

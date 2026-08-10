@@ -1,4 +1,5 @@
 import { getStoredCompanyId, getStoredToken } from "@/features/auth/api";
+import { getApiBaseUrl } from "@/lib/api-client";
 
 export type UploadedImage = {
   url: string;
@@ -10,7 +11,6 @@ export type UploadedImage = {
  * Shared image upload used by course / instructor / CMS forms.
  */
 export async function uploadImage(file: File): Promise<UploadedImage> {
-  const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
   const headers = new Headers();
   headers.set("Accept", "application/json");
   const token = getStoredToken();
@@ -21,7 +21,7 @@ export async function uploadImage(file: File): Promise<UploadedImage> {
   const formData = new FormData();
   formData.append("file", file);
 
-  const response = await fetch(`${API_URL}/media/upload`, {
+  const response = await fetch(`${getApiBaseUrl()}/media/upload`, {
     method: "POST",
     headers,
     body: formData,
