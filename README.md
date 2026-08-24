@@ -31,7 +31,7 @@ Production-oriented modular LMS built as:
 | CRM (Contact leads) | Enabled |
 | Blog | Enabled |
 | Lesson (standalone) / Knowledge / Notification / Report | Registered, disabled |
-| Payment gateway | Deferred |
+| Payment gateway | Enabled (Stripe + demo fallback) |
 
 ## Production
 
@@ -196,7 +196,23 @@ Or Direct host: `db.ynktwqalscgmbxbqboyz.supabase.co` (IPv6).
 
 Then on the API host: `php artisan migrate --seed`.
 
+### Payment (Stripe)
+
+Checkout creates a payment session for paid courses. Free courses still enroll instantly.
+
+```
+PAYMENT_DRIVER=stripe
+PAYMENT_CURRENCY=thb
+FRONTEND_URL=https://edulms-school.vercel.app
+STRIPE_SECRET=sk_test_...
+STRIPE_PUBLISHABLE_KEY=pk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+```
+
+Webhook endpoint: `POST /api/v1/payments/webhook/stripe`  
+If `STRIPE_SECRET` is empty, the API falls back to a **demo pay page** at `/checkout/pay/{uuid}` (no real charge).
+
 ## Next Feature Priority
 
-1. Payment gateway (checkout currently enrolls without charge)
-2. Lesson module / notifications / reports
+1. Lesson module / notifications / reports
+2. Payment admin UI / refunds / receipts

@@ -52,6 +52,11 @@ return [
             'enabled' => true,
             'dependencies' => ['course', 'user'],
         ],
+        'payment' => [
+            'name' => 'การชำระเงิน',
+            'enabled' => true,
+            'dependencies' => ['enrollment', 'course', 'user'],
+        ],
         'cms' => [
             'name' => 'CMS (Hero / Categories)',
             'enabled' => true,

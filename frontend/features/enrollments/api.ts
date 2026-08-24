@@ -1,5 +1,6 @@
 import { apiClient } from "@/lib/api-client";
 import { getStoredCompanyId, getStoredToken } from "@/features/auth/api";
+import type { CheckoutResult } from "@/features/payments/api";
 
 export type Enrollment = {
   id: number;
@@ -40,7 +41,7 @@ function authOptions() {
 }
 
 export async function purchaseCourse(courseId: number) {
-  return apiClient<Enrollment>("/enrollments/purchase", {
+  return apiClient<CheckoutResult>("/enrollments/purchase", {
     token: getStoredToken(),
     method: "POST",
     body: { course_id: courseId },
@@ -48,11 +49,7 @@ export async function purchaseCourse(courseId: number) {
 }
 
 export async function checkoutCourses(courseIds: number[]) {
-  return apiClient<{
-    enrollments: Enrollment[];
-    skipped_course_ids: number[];
-    purchased_count: number;
-  }>("/enrollments/checkout", {
+  return apiClient<CheckoutResult>("/enrollments/checkout", {
     token: getStoredToken(),
     method: "POST",
     body: { course_ids: courseIds },

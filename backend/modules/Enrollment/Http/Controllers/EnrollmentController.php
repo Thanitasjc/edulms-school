@@ -12,11 +12,14 @@ use Modules\Enrollment\Domain\Models\Enrollment;
 use Modules\Enrollment\Http\Requests\CheckoutEnrollmentRequest;
 use Modules\Enrollment\Http\Requests\PurchaseEnrollmentRequest;
 use Modules\Enrollment\Http\Resources\EnrollmentResource;
+use Modules\Payment\Application\Services\PaymentService;
+use Modules\Payment\Http\Resources\PaymentResource;
 
 class EnrollmentController extends Controller
 {
     public function __construct(
-        private readonly EnrollmentService $enrollmentService
+        private readonly EnrollmentService $enrollmentService,
+        private readonly PaymentService $paymentService,
     ) {}
 
     public function index(Request $request): JsonResponse
@@ -43,31 +46,55 @@ class EnrollmentController extends Controller
 
     public function purchase(PurchaseEnrollmentRequest $request): JsonResponse
     {
-        $enrollment = $this->enrollmentService->purchase(
+        $result = $this->paymentService->checkout(
             $request->user(),
-            (int) $request->validated('course_id')
+            [(int) $request->validated('course_id')]
         );
 
+        if ($result['mode'] === 'payment_required') {
+            return ApiResponse::created(
+                [
+                    'mode' => 'payment_required',
+                    'checkout_url' => $result['checkout_url'],
+                    'payment' => $result['payment'] ? new PaymentResource($result['payment']) : null,
+                    'enrollment' => null,
+                ],
+                __('api.payment.checkout_created')
+            );
+        }
+
+        $enrollment = $result['enrollments'][0] ?? null;
+
         return ApiResponse::created(
-            new EnrollmentResource($enrollment),
+            [
+                'mode' => 'enrolled',
+                'checkout_url' => null,
+                'payment' => null,
+                'enrollment' => $enrollment ? new EnrollmentResource($enrollment) : null,
+            ],
             __('api.enrollment.purchased')
         );
     }
 
     public function checkout(CheckoutEnrollmentRequest $request): JsonResponse
     {
-        $result = $this->enrollmentService->purchaseMany(
+        $result = $this->paymentService->checkout(
             $request->user(),
             $request->validated('course_ids')
         );
 
         return ApiResponse::created(
             [
+                'mode' => $result['mode'],
+                'checkout_url' => $result['checkout_url'],
+                'payment' => $result['payment'] ? new PaymentResource($result['payment']) : null,
                 'enrollments' => EnrollmentResource::collection(collect($result['enrollments'])),
                 'skipped_course_ids' => $result['skipped_course_ids'],
                 'purchased_count' => $result['purchased_count'],
             ],
-            __('api.enrollment.checkout_completed')
+            $result['mode'] === 'payment_required'
+                ? __('api.payment.checkout_created')
+                : __('api.enrollment.checkout_completed')
         );
     }
 

@@ -13,6 +13,7 @@ use Modules\Company\Providers\CompanyServiceProvider;
 use Modules\Course\Providers\CourseServiceProvider;
 use Modules\Enrollment\Providers\EnrollmentServiceProvider;
 use Modules\Instructor\Providers\InstructorServiceProvider;
+use Modules\Payment\Providers\PaymentServiceProvider;
 use Modules\ModuleRegistry\Providers\ModuleRegistryServiceProvider;
 use Modules\Quiz\Providers\QuizServiceProvider;
 use Modules\Role\Providers\RoleServiceProvider;
@@ -34,6 +35,7 @@ class ModuleServiceProvider extends ServiceProvider
         CourseServiceProvider::class,
         InstructorServiceProvider::class,
         EnrollmentServiceProvider::class,
+        PaymentServiceProvider::class,
         CmsServiceProvider::class,
         MediaServiceProvider::class,
         CrmServiceProvider::class,

@@ -281,7 +281,14 @@ function CourseDetailsContent({ course }: { course: PublicCourse }) {
 
   const purchaseMutation = useMutation({
     mutationFn: () => purchaseCourse(course.id),
-    onSuccess: () => {
+    onSuccess: (response) => {
+      const data = response.data;
+      if (data.mode === "payment_required" && data.checkout_url) {
+        toast.message("Redirecting to payment...");
+        window.location.href = data.checkout_url;
+        return;
+      }
+
       toast.success(course.is_free || course.price <= 0 ? "Enrolled successfully" : "Purchase successful");
       void queryClient.invalidateQueries({ queryKey: ["public-course", course.slug] });
       void queryClient.invalidateQueries({ queryKey: ["course-progress", course.slug] });

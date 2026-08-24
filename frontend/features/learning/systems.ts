@@ -82,7 +82,7 @@ export const learnerSystems: LearnerSystem[] = [
     href: "/cart",
     title: "Enrollment / checkout",
     titleTh: "ลงทะเบียนเรียน",
-    description: "Add courses to cart and complete enrollment.",
+    description: "Add courses to cart and pay with Stripe (or demo pay locally).",
     icon: ShoppingBag,
   },
 ];

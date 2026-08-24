@@ -100,6 +100,16 @@ return [
         'course_not_found' => 'Course not found or not published.',
     ],
 
+    'payment' => [
+        'checkout_created' => 'Payment session created. Complete payment to enroll.',
+        'retrieved' => 'Payment retrieved successfully.',
+        'paid' => 'Payment completed successfully.',
+        'pending' => 'Payment is still pending.',
+        'demo_only' => 'This confirm endpoint is only available for demo payments.',
+        'empty_cart' => 'No courses selected for checkout.',
+        'invalid_webhook' => 'Invalid payment webhook payload.',
+    ],
+
     'progress' => [
         'retrieved' => 'Learning progress retrieved successfully.',
         'updated' => 'Learning progress updated successfully.',

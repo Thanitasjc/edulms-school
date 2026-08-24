@@ -75,7 +75,7 @@ class EnrollmentService
     }
 
     /**
-     * Instant purchase / free enroll (mock payment).
+     * Grant enrollment access (called for free courses or after successful payment).
      *
      * @throws Throwable
      */
