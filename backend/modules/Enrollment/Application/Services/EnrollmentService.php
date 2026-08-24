@@ -18,10 +18,25 @@ class EnrollmentService
     {
         $query = Enrollment::query()->with(['course', 'user']);
 
+        $search = trim((string) request()->query('search', ''));
+        if ($search !== '') {
+            $query->where(function ($builder) use ($search): void {
+                $builder
+                    ->whereHas('user', function ($userQuery) use ($search): void {
+                        $userQuery
+                            ->where('name', 'like', '%'.$search.'%')
+                            ->orWhere('email', 'like', '%'.$search.'%');
+                    })
+                    ->orWhereHas('course', function ($courseQuery) use ($search): void {
+                        $courseQuery->where('title', 'like', '%'.$search.'%');
+                    });
+            });
+        }
+
         $queryFilter->apply(
             $query,
             searchable: [],
-            filterable: ['status', 'course_id', 'user_id'],
+            filterable: ['status', 'course_id', 'user_id', 'source'],
             sortable: ['id', 'enrolled_at', 'amount_paid', 'created_at']
         );
 
@@ -163,6 +178,88 @@ class EnrollmentService
     }
 
     /**
+     * Admin grant / create enrollment for a user + course.
+     *
+     * @throws Throwable
+     */
+    public function createAdmin(array $data): Enrollment
+    {
+        return DB::transaction(function () use ($data): Enrollment {
+            /** @var Course $course */
+            $course = Course::query()->findOrFail((int) $data['course_id']);
+            $userId = (int) $data['user_id'];
+
+            /** @var Enrollment|null $existing */
+            $existing = Enrollment::withTrashed()
+                ->where('course_id', $course->id)
+                ->where('user_id', $userId)
+                ->first();
+
+            $status = $data['status'] ?? 'active';
+            $amount = array_key_exists('amount_paid', $data)
+                ? (float) $data['amount_paid']
+                : $this->resolvePrice($course);
+            $source = $data['source'] ?? 'admin';
+            $currency = $data['currency'] ?? 'THB';
+
+            if ($existing !== null) {
+                if ($existing->trashed()) {
+                    $existing->restore();
+                }
+
+                if ($existing->status === 'active' && $status === 'active') {
+                    throw new ConflictHttpException(__('api.enrollment.already_enrolled'));
+                }
+
+                $existing->update([
+                    'status' => $status,
+                    'amount_paid' => $amount,
+                    'currency' => $currency,
+                    'source' => $source,
+                    'enrolled_at' => $data['enrolled_at'] ?? ($existing->enrolled_at ?? now()),
+                ]);
+
+                $this->bumpStudentsCount($course);
+
+                return $existing->refresh()->load(['course', 'user']);
+            }
+
+            /** @var Enrollment $enrollment */
+            $enrollment = Enrollment::query()->create([
+                'company_id' => $course->company_id,
+                'course_id' => $course->id,
+                'user_id' => $userId,
+                'status' => $status,
+                'amount_paid' => $amount,
+                'currency' => $currency,
+                'source' => $source,
+                'enrolled_at' => $data['enrolled_at'] ?? now(),
+            ]);
+
+            $this->bumpStudentsCount($course);
+
+            return $enrollment->load(['course', 'user']);
+        });
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function updateAdmin(int $id, array $data): Enrollment
+    {
+        return DB::transaction(function () use ($id, $data): Enrollment {
+            $enrollment = $this->findAdmin($id);
+            $enrollment->update($data);
+
+            if ($enrollment->course) {
+                $this->bumpStudentsCount($enrollment->course);
+            }
+
+            return $enrollment->refresh()->load(['course', 'user']);
+        });
+    }
+
+    /**
      * @throws Throwable
      */
     public function cancel(int $id): Enrollment
@@ -171,7 +268,29 @@ class EnrollmentService
             $enrollment = $this->findAdmin($id);
             $enrollment->update(['status' => 'cancelled']);
 
-            return $enrollment->refresh();
+            if ($enrollment->course) {
+                $this->bumpStudentsCount($enrollment->course);
+            }
+
+            return $enrollment->refresh()->load(['course', 'user']);
+        });
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function deleteAdmin(int $id): bool
+    {
+        return DB::transaction(function () use ($id): bool {
+            $enrollment = $this->findAdmin($id);
+            $course = $enrollment->course;
+            $deleted = (bool) $enrollment->delete();
+
+            if ($course) {
+                $this->bumpStudentsCount($course);
+            }
+
+            return $deleted;
         });
     }
 

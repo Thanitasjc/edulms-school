@@ -108,6 +108,48 @@ class EnrollmentController extends Controller
         );
     }
 
+    public function store(Request $request): JsonResponse
+    {
+        abort_unless($request->user()?->can('enrollment.create') || $request->user()?->is_super_admin, 403);
+
+        $data = $request->validate([
+            'course_id' => ['required', 'integer', 'exists:courses,id'],
+            'user_id' => ['required', 'integer', 'exists:users,id'],
+            'status' => ['nullable', 'in:active,cancelled'],
+            'amount_paid' => ['nullable', 'numeric', 'min:0'],
+            'currency' => ['nullable', 'string', 'max:10'],
+            'source' => ['nullable', 'string', 'max:50'],
+            'enrolled_at' => ['nullable', 'date'],
+        ]);
+
+        $enrollment = $this->enrollmentService->createAdmin($data);
+
+        return ApiResponse::created(
+            new EnrollmentResource($enrollment),
+            __('api.enrollment.created')
+        );
+    }
+
+    public function update(Request $request, Enrollment $enrollment): JsonResponse
+    {
+        abort_unless($request->user()?->can('enrollment.update') || $request->user()?->is_super_admin, 403);
+
+        $data = $request->validate([
+            'status' => ['sometimes', 'required', 'in:active,cancelled'],
+            'amount_paid' => ['sometimes', 'nullable', 'numeric', 'min:0'],
+            'currency' => ['sometimes', 'nullable', 'string', 'max:10'],
+            'source' => ['sometimes', 'nullable', 'string', 'max:50'],
+            'enrolled_at' => ['sometimes', 'nullable', 'date'],
+        ]);
+
+        $enrollment = $this->enrollmentService->updateAdmin($enrollment->id, $data);
+
+        return ApiResponse::success(
+            new EnrollmentResource($enrollment),
+            __('api.enrollment.updated')
+        );
+    }
+
     public function cancel(Request $request, Enrollment $enrollment): JsonResponse
     {
         abort_unless($request->user()?->can('enrollment.update') || $request->user()?->is_super_admin, 403);
@@ -118,5 +160,14 @@ class EnrollmentController extends Controller
             new EnrollmentResource($enrollment),
             __('api.enrollment.cancelled')
         );
+    }
+
+    public function destroy(Request $request, Enrollment $enrollment): JsonResponse
+    {
+        abort_unless($request->user()?->can('enrollment.delete') || $request->user()?->is_super_admin, 403);
+
+        $this->enrollmentService->deleteAdmin($enrollment->id);
+
+        return ApiResponse::noContent(__('api.enrollment.deleted'));
     }
 }

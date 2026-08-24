@@ -93,6 +93,9 @@ return [
     'enrollment' => [
         'retrieved_list' => 'Enrollments retrieved successfully.',
         'retrieved' => 'Enrollment retrieved successfully.',
+        'created' => 'Enrollment created successfully.',
+        'updated' => 'Enrollment updated successfully.',
+        'deleted' => 'Enrollment deleted successfully.',
         'purchased' => 'Course purchased successfully.',
         'checkout_completed' => 'Checkout completed successfully.',
         'cancelled' => 'Enrollment cancelled successfully.',

@@ -33,6 +33,16 @@ export type Enrollment = {
   } | null;
 };
 
+export type AdminEnrollmentInput = {
+  course_id: number;
+  user_id: number;
+  status?: string;
+  amount_paid?: number;
+  currency?: string;
+  source?: string;
+  enrolled_at?: string;
+};
+
 function authOptions() {
   return {
     token: getStoredToken(),
@@ -62,20 +72,51 @@ export async function listMyEnrollments() {
   });
 }
 
-export async function listAdminEnrollments(params?: { search?: string; status?: string; page?: number }) {
+export async function listAdminEnrollments(params?: {
+  search?: string;
+  status?: string;
+  page?: number;
+}) {
   const query = new URLSearchParams();
   query.set("per_page", "20");
   query.set("sort", "created_at");
   query.set("direction", "desc");
   if (params?.status) query.set("filters[status]", params.status);
+  if (params?.search) query.set("search", params.search);
   if (params?.page) query.set("page", String(params.page));
 
   return apiClient<Enrollment[]>(`/enrollments?${query.toString()}`, authOptions());
+}
+
+export async function createAdminEnrollment(input: AdminEnrollmentInput) {
+  return apiClient<Enrollment>("/enrollments", {
+    ...authOptions(),
+    method: "POST",
+    body: input,
+  });
+}
+
+export async function updateAdminEnrollment(
+  id: number,
+  input: Partial<Pick<AdminEnrollmentInput, "status" | "amount_paid" | "currency" | "source" | "enrolled_at">>,
+) {
+  return apiClient<Enrollment>(`/enrollments/${id}`, {
+    ...authOptions(),
+    method: "PUT",
+    body: input,
+  });
 }
 
 export async function cancelEnrollment(id: number) {
   return apiClient<Enrollment>(`/enrollments/${id}/cancel`, {
     ...authOptions(),
     method: "POST",
+  });
+}
+
+export async function deleteAdminEnrollment(id: number) {
+  return apiClient<null>(`/enrollments/${id}`, {
+    ...authOptions(),
+    method: "DELETE",
   });
 }

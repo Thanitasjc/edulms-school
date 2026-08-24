@@ -15,6 +15,10 @@ Route::middleware(['auth:sanctum'])->group(function (): void {
 
 Route::middleware(['auth:sanctum', 'tenant', 'module:enrollment'])->group(function (): void {
     Route::get('enrollments', [EnrollmentController::class, 'index'])->middleware('permission:enrollment.view');
+    Route::post('enrollments', [EnrollmentController::class, 'store'])->middleware('permission:enrollment.create');
     Route::get('enrollments/{enrollment}', [EnrollmentController::class, 'show'])->middleware('permission:enrollment.view');
+    Route::put('enrollments/{enrollment}', [EnrollmentController::class, 'update'])->middleware('permission:enrollment.update');
+    Route::patch('enrollments/{enrollment}', [EnrollmentController::class, 'update'])->middleware('permission:enrollment.update');
     Route::post('enrollments/{enrollment}/cancel', [EnrollmentController::class, 'cancel'])->middleware('permission:enrollment.update');
+    Route::delete('enrollments/{enrollment}', [EnrollmentController::class, 'destroy'])->middleware('permission:enrollment.delete');
 });
