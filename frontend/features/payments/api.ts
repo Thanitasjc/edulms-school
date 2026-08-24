@@ -1,5 +1,5 @@
 import { apiClient } from "@/lib/api-client";
-import { getStoredToken } from "@/features/auth/api";
+import { getStoredCompanyId, getStoredToken } from "@/features/auth/api";
 import type { Enrollment } from "@/features/enrollments/api";
 
 export type PaymentItem = {
@@ -17,6 +17,7 @@ export type PaymentItem = {
 export type Payment = {
   id: number;
   uuid: string;
+  user_id?: number;
   status: string;
   gateway: string;
   amount: number;
@@ -24,6 +25,12 @@ export type Payment = {
   external_id?: string | null;
   checkout_url?: string | null;
   paid_at?: string | null;
+  created_at?: string | null;
+  user?: {
+    id: number;
+    name: string;
+    email: string;
+  } | null;
   items?: PaymentItem[];
 };
 
@@ -40,31 +47,56 @@ export type CheckoutResult = {
 function authOptions() {
   return {
     token: getStoredToken(),
+    companyId: getStoredCompanyId(),
+  };
+}
+
+function publicAuthOptions() {
+  return {
+    token: getStoredToken(),
   };
 }
 
 export async function checkoutPayments(courseIds: number[]) {
   return apiClient<CheckoutResult>("/payments/checkout", {
-    ...authOptions(),
+    ...publicAuthOptions(),
     method: "POST",
     body: { course_ids: courseIds },
   });
 }
 
 export async function getPayment(uuid: string) {
-  return apiClient<Payment>(`/payments/${uuid}`, authOptions());
+  return apiClient<Payment>(`/payments/${uuid}`, publicAuthOptions());
 }
 
 export async function confirmDemoPayment(uuid: string) {
   return apiClient<Payment>(`/payments/${uuid}/confirm`, {
-    ...authOptions(),
+    ...publicAuthOptions(),
     method: "POST",
   });
 }
 
 export async function syncPayment(uuid: string) {
   return apiClient<Payment>(`/payments/${uuid}/sync`, {
-    ...authOptions(),
+    ...publicAuthOptions(),
     method: "POST",
   });
+}
+
+export async function listAdminPayments(params?: {
+  search?: string;
+  status?: string;
+  gateway?: string;
+  page?: number;
+}) {
+  const query = new URLSearchParams();
+  query.set("per_page", "20");
+  query.set("sort", "created_at");
+  query.set("direction", "desc");
+  if (params?.search) query.set("search", params.search);
+  if (params?.status) query.set("filters[status]", params.status);
+  if (params?.gateway) query.set("filters[gateway]", params.gateway);
+  if (params?.page) query.set("page", String(params.page));
+
+  return apiClient<Payment[]>(`/payments?${query.toString()}`, authOptions());
 }

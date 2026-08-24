@@ -26,6 +26,7 @@ class DatabaseSeeder extends Seeder
             'course.view', 'course.create', 'course.update', 'course.delete', 'course.restore',
             'instructor.view', 'instructor.create', 'instructor.update', 'instructor.delete', 'instructor.restore',
             'enrollment.view', 'enrollment.create', 'enrollment.update', 'enrollment.delete',
+            'payment.view',
             'cms.view', 'cms.create', 'cms.update', 'cms.delete',
             'media.view', 'media.create', 'media.delete',
             'crm.view', 'crm.update', 'crm.delete',

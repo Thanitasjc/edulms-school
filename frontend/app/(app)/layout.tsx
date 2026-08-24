@@ -21,6 +21,7 @@ import {
   FolderOpen,
   Mail,
   Newspaper,
+  CreditCard,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/providers/auth-provider";
@@ -37,6 +38,7 @@ const nav: Array<{
   { href: "/manage/courses", label: "Courses", icon: BookOpen, permission: "course.view", module: "course" },
   { href: "/manage/instructors", label: "Instructors", icon: GraduationCap, permission: "instructor.view", module: "instructor" },
   { href: "/manage/enrollments", label: "Enrollments", icon: ShoppingBag, permission: "enrollment.view", module: "enrollment" },
+  { href: "/manage/payments", label: "Payments", icon: CreditCard, permission: "payment.view", module: "payment" },
   { href: "/manage/reviews", label: "Reviews", icon: MessageSquare, permission: "course.view", module: "course" },
   { href: "/manage/categories", label: "Categories", icon: Layers, permission: "cms.view", module: "cms" },
   { href: "/manage/hero", label: "Hero", icon: ImageIcon, permission: "cms.view", module: "cms" },

@@ -101,6 +101,7 @@ return [
     ],
 
     'payment' => [
+        'retrieved_list' => 'Payments retrieved successfully.',
         'checkout_created' => 'Payment session created. Complete payment to enroll.',
         'retrieved' => 'Payment retrieved successfully.',
         'paid' => 'Payment completed successfully.',

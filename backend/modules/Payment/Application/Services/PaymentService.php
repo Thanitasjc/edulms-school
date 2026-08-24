@@ -3,6 +3,8 @@
 namespace Modules\Payment\Application\Services;
 
 use App\Models\User;
+use App\Core\Support\QueryFilter;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Modules\Course\Domain\Models\Course;
 use Modules\Enrollment\Application\Services\EnrollmentService;
@@ -20,6 +22,37 @@ class PaymentService
     public function __construct(
         private readonly EnrollmentService $enrollmentService,
     ) {}
+
+    public function listAdmin(QueryFilter $queryFilter): LengthAwarePaginator
+    {
+        $query = Payment::query()->with(['user', 'items.course']);
+
+        $search = trim((string) request()->query('search', ''));
+        if ($search !== '') {
+            $query->where(function ($builder) use ($search): void {
+                $builder
+                    ->where('uuid', 'like', '%'.$search.'%')
+                    ->orWhere('external_id', 'like', '%'.$search.'%')
+                    ->orWhereHas('user', function ($userQuery) use ($search): void {
+                        $userQuery
+                            ->where('name', 'like', '%'.$search.'%')
+                            ->orWhere('email', 'like', '%'.$search.'%');
+                    })
+                    ->orWhereHas('items', function ($itemQuery) use ($search): void {
+                        $itemQuery->where('title', 'like', '%'.$search.'%');
+                    });
+            });
+        }
+
+        $queryFilter->apply(
+            $query,
+            searchable: [],
+            filterable: ['status', 'gateway', 'user_id'],
+            sortable: ['id', 'amount', 'status', 'paid_at', 'created_at', 'updated_at']
+        );
+
+        return $query->paginate($queryFilter->perPage());
+    }
 
     public function resolveGateway(): PaymentGateway
     {

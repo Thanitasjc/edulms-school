@@ -22,6 +22,15 @@ class PaymentResource extends JsonResource
             'external_id' => $this->external_id,
             'checkout_url' => $this->checkout_url,
             'paid_at' => $this->paid_at?->toIso8601String(),
+            'user' => $this->whenLoaded('user', function () {
+                return $this->user
+                    ? [
+                        'id' => $this->user->id,
+                        'name' => $this->user->name,
+                        'email' => $this->user->email,
+                    ]
+                    : null;
+            }),
             'items' => $this->whenLoaded('items', function () {
                 return $this->items->map(fn ($item) => [
                     'id' => $item->id,

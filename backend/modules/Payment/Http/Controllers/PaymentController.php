@@ -3,6 +3,7 @@
 namespace Modules\Payment\Http\Controllers;
 
 use App\Core\Support\ApiResponse;
+use App\Core\Support\QueryFilter;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -17,6 +18,18 @@ class PaymentController extends Controller
     public function __construct(
         private readonly PaymentService $paymentService
     ) {}
+
+    public function index(Request $request): JsonResponse
+    {
+        abort_unless($request->user()?->can('payment.view') || $request->user()?->is_super_admin, 403);
+
+        $paginator = $this->paymentService->listAdmin(new QueryFilter($request));
+
+        return ApiResponse::success(
+            PaymentResource::collection($paginator),
+            __('api.payment.retrieved_list')
+        );
+    }
 
     public function checkout(CheckoutPaymentRequest $request): JsonResponse
     {
@@ -44,10 +57,17 @@ class PaymentController extends Controller
 
     public function show(Request $request, string $payment): JsonResponse
     {
-        $model = $this->paymentService->findByUuidForUser($payment, $request->user());
+        $user = $request->user();
+        abort_unless($user !== null, 401);
+
+        if ($user->can('payment.view') || $user->is_super_admin) {
+            $model = $this->paymentService->findByUuid($payment);
+        } else {
+            $model = $this->paymentService->findByUuidForUser($payment, $user);
+        }
 
         return ApiResponse::success(
-            new PaymentResource($model),
+            new PaymentResource($model->loadMissing(['items.course', 'user'])),
             __('api.payment.retrieved')
         );
     }
