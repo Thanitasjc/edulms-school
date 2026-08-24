@@ -39,9 +39,19 @@ export async function createPublicCourseReview(
   });
 }
 
+export type AdminReviewInput = {
+  course_id: number;
+  user_id: number;
+  rating: number;
+  title?: string;
+  body?: string;
+  status?: string;
+};
+
 export async function listAdminCourseReviews(params?: {
   course_id?: number;
   status?: string;
+  search?: string;
   page?: number;
 }) {
   const query = new URLSearchParams();
@@ -50,14 +60,23 @@ export async function listAdminCourseReviews(params?: {
   query.set("direction", "desc");
   if (params?.course_id) query.set("filters[course_id]", String(params.course_id));
   if (params?.status) query.set("filters[status]", params.status);
+  if (params?.search) query.set("search", params.search);
   if (params?.page) query.set("page", String(params.page));
 
   return apiClient<CourseReview[]>(`/course-reviews?${query.toString()}`, authOptions());
 }
 
+export async function createAdminCourseReview(input: AdminReviewInput) {
+  return apiClient<CourseReview>("/course-reviews", {
+    ...authOptions(),
+    method: "POST",
+    body: input,
+  });
+}
+
 export async function updateAdminCourseReview(
   id: number,
-  input: { rating?: number; title?: string; body?: string; status?: string },
+  input: Partial<Pick<AdminReviewInput, "rating" | "title" | "body" | "status">>,
 ) {
   return apiClient<CourseReview>(`/course-reviews/${id}`, {
     ...authOptions(),
