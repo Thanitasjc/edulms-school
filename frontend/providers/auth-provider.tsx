@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import {
   getStoredToken,
   loginRequest,
@@ -17,8 +17,8 @@ type AuthContextValue = {
   enabledModules: string[];
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (input: LoginInput) => Promise<void>;
-  register: (input: RegisterInput) => Promise<void>;
+  login: (input: LoginInput) => Promise<AuthUser>;
+  register: (input: RegisterInput) => Promise<AuthUser>;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
 };
@@ -30,10 +30,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [enabledModules, setEnabledModules] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const sessionRef = useRef(0);
 
   const refresh = useCallback(async () => {
+    const requestId = sessionRef.current;
     const stored = getStoredToken();
     if (!stored) {
+      if (requestId !== sessionRef.current) return;
       setUser(null);
       setToken(null);
       setEnabledModules([]);
@@ -43,16 +46,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     try {
       const data = await meRequest(stored);
+      if (requestId !== sessionRef.current || getStoredToken() !== stored) return;
       setToken(stored);
       setUser(data.user);
       setEnabledModules(data.enabled_modules);
     } catch {
+      if (requestId !== sessionRef.current || getStoredToken() !== stored) return;
       setStoredToken(null);
       setUser(null);
       setToken(null);
       setEnabledModules([]);
     } finally {
-      setIsLoading(false);
+      if (requestId === sessionRef.current) {
+        setIsLoading(false);
+      }
     }
   }, []);
 
@@ -62,16 +69,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = useCallback(async (input: LoginInput) => {
     const data = await loginRequest(input);
+    sessionRef.current += 1;
     setToken(data.token);
     setUser(data.user);
     setEnabledModules(data.enabled_modules);
+    setIsLoading(false);
+    return data.user;
   }, []);
 
   const register = useCallback(async (input: RegisterInput) => {
     const data = await registerRequest(input);
+    sessionRef.current += 1;
     setToken(data.token);
     setUser(data.user);
     setEnabledModules(data.enabled_modules);
+    setIsLoading(false);
+    return data.user;
   }, []);
 
   const logout = useCallback(async () => {

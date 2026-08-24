@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { getPostAuthRoute } from "@/features/auth/redirect";
 import { loginSchema, type LoginInput } from "@/features/auth/schemas";
 import { useAuth } from "@/providers/auth-provider";
 import { ApiClientError } from "@/lib/api-client";
@@ -27,9 +28,9 @@ export default function LoginPage() {
 
   const onSubmit = form.handleSubmit(async (values) => {
     try {
-      await login(values);
+      const user = await login(values);
       toast.success("Logged in successfully");
-      router.push("/dashboard");
+      router.push(getPostAuthRoute(user));
     } catch (error) {
       const message = error instanceof ApiClientError ? error.message : "Unable to login";
       toast.error(message);
@@ -37,10 +38,10 @@ export default function LoginPage() {
   });
 
   return (
-    <Card className="border-slate-200/80 shadow-xl dark:border-white/10">
+    <Card className="mx-auto w-full max-w-md border-slate-200/80 shadow-xl dark:border-white/10">
       <CardHeader>
         <CardTitle>Sign in</CardTitle>
-        <CardDescription>Access your academy dashboard</CardDescription>
+        <CardDescription>Access your dashboard</CardDescription>
       </CardHeader>
       <CardContent>
         <form className="space-y-4" onSubmit={onSubmit}>

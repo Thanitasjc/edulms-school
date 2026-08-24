@@ -33,6 +33,28 @@ Production-oriented modular LMS built as:
 | Lesson (standalone) / Knowledge / Notification / Report | Registered, disabled |
 | Payment gateway | Deferred |
 
+## Production
+
+| Layer | URL |
+|-------|-----|
+| Frontend | https://edulms-school.vercel.app |
+| Backend API | https://edulms-api.onrender.com |
+| API base (`v1`) | https://edulms-api.onrender.com/api/v1 |
+| Login | https://edulms-school.vercel.app/login |
+
+Demo accounts (password for all: `Password123!`):
+
+| Email | Password | Role |
+|-------|----------|------|
+| `admin@demo-academy.test` | `Password123!` | Company admin |
+| `instructor@demo-academy.test` | `Password123!` | Instructor |
+| `student@demo-academy.test` | `Password123!` | Student |
+| `superadmin@lms.test` | `Password123!` | Super admin |
+
+> **Free-tier notes**
+> - **Render** (API): may cold-start (~30–60s) on the first request after idle — wakes automatically.
+> - **Supabase** (DB): may **pause** after ~1 week of inactivity — does **not** auto-wake. Resume manually (steps below). Symptoms: login fails / “ไม่สามารถโหลดคอร์สได้” / API `QueryException`.
+
 ## Quick Start
 
 ### Backend
@@ -113,36 +135,68 @@ Useful public endpoints:
 | Layer | Service | Account / notes |
 |-------|---------|-----------------|
 | Frontend | [Vercel](https://edulms-school.vercel.app) | `39479@sjc.ac.th` — project `edulms-school`, root `frontend/` |
+| Backend | [Render](https://edulms-api.onrender.com) | Docker service `edulms-api`, rootDir `backend/` |
 | Source | [GitHub](https://github.com/Thanitasjc/edulms-school) | `Thanitasjc` |
-| Database | Supabase Postgres | Use account `thanitabackup01@gmail.com` → Project Settings → Database |
-| API | Laravel host (not Vercel) | Point `DB_*` at Supabase; set `FRONTEND_URL` + CORS to the Vercel domain |
+| Database | Supabase Postgres | `thanitabackup01@gmail.com` → Project Settings → Database |
 
 ### Vercel env (frontend)
 
 ```
-NEXT_PUBLIC_API_URL=https://YOUR-API-HOST/api/v1
+NEXT_PUBLIC_API_URL=https://edulms-api.onrender.com/api/v1
 NEXT_PUBLIC_APP_URL=https://edulms-school.vercel.app
 ```
 
+Browsers use same-origin `/api-proxy/v1` (Next rewrite → Render) to avoid mobile CORS issues.
+
+### Supabase project (created)
+
+| Field | Value |
+|-------|--------|
+| Org | [thanitabackup01@gmail.com's Org](https://supabase.com/dashboard/org/yfbmelkpvgnoytubayse) |
+| Project | `edulms` |
+| Ref | `ynktwqalscgmbxbqboyz` |
+| API URL | `https://ynktwqalscgmbxbqboyz.supabase.co` |
+| Region | Southeast Asia (Singapore) `ap-southeast-1` |
+| Status | Healthy |
+
+Dashboard: https://supabase.com/dashboard/project/ynktwqalscgmbxbqboyz
+
+### Resume paused Supabase (เมื่อเว็บเข้าไม่ได้)
+
+Free projects pause when idle. Login and courses will fail until you resume.
+
+1. Sign in to Supabase with `thanitabackup01@gmail.com`
+2. Open project **edulms**:  
+   https://supabase.com/dashboard/project/ynktwqalscgmbxbqboyz
+3. If you see **“Project edulms is paused”**, click **Resume project**
+4. Confirm with **Resume** in the dialog
+5. Wait until status shows restored / healthy (~1–2 minutes) — look for **“Restoration complete!”**
+6. Retry the site: https://edulms-school.vercel.app/login  
+   (If Render was also asleep, the first API call may take ~30–60s.)
+
+To avoid pauses: upgrade the project to **Pro**, or open the dashboard / use the site regularly.
+
 ### Supabase → Laravel `.env`
+
+Use **Session pooler** if your network is IPv4-only (common on Windows):
 
 ```
 DB_CONNECTION=pgsql
-DB_HOST=db.<PROJECT_REF>.supabase.co
+DB_HOST=aws-0-ap-southeast-1.pooler.supabase.com
 DB_PORT=5432
 DB_DATABASE=postgres
-DB_USERNAME=postgres
-DB_PASSWORD=<DATABASE_PASSWORD>
+DB_USERNAME=postgres.ynktwqalscgmbxbqboyz
+DB_PASSWORD=<paste-from-Connect-modal>
 DB_SSLMODE=require
 FRONTEND_URL=https://edulms-school.vercel.app
 CORS_ALLOWED_ORIGINS=https://edulms-school.vercel.app
 ```
 
+Or Direct host: `db.ynktwqalscgmbxbqboyz.supabase.co` (IPv6).
+
 Then on the API host: `php artisan migrate --seed`.
 
 ## Next Feature Priority
 
-1. Host Laravel API + connect Supabase Postgres
-2. Payment gateway (checkout currently enrolls without charge)
-3. Lesson module (standalone) if curriculum outgrows JSON on course
-4. Notifications / reports
+1. Payment gateway (checkout currently enrolls without charge)
+2. Lesson module / notifications / reports

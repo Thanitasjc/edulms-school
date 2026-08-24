@@ -1,10 +1,5 @@
-import ModuleReadyState from "@/components/feedback/module-ready-state";
+import { SettingsManager } from "@/features/settings/settings-manager";
 
 export default function SettingsPage() {
-  return (
-    <ModuleReadyState
-      title="Settings"
-      description="Tenant settings API is available at /api/v1/settings."
-    />
-  );
+  return <SettingsManager />;
 }

@@ -19,6 +19,7 @@ return [
         'profile_retrieved' => 'Profile retrieved successfully.',
         'invalid_credentials' => 'The provided credentials are incorrect.',
         'inactive_account' => 'This account is not active.',
+        'public_school_unavailable' => 'No public school is available for learner signup.',
     ],
 
     'tenant' => [
@@ -58,6 +59,7 @@ return [
         'updated' => 'Role updated successfully.',
         'deleted' => 'Role deleted successfully.',
         'permissions_retrieved' => 'Permissions retrieved successfully.',
+        'system_protected' => 'System roles cannot be renamed or deleted.',
     ],
 
     'setting' => [

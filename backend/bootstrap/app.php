@@ -9,6 +9,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Spatie\Permission\Middleware\PermissionMiddleware;
 use Spatie\Permission\Middleware\RoleMiddleware;
 use Spatie\Permission\Middleware\RoleOrPermissionMiddleware;
@@ -58,6 +59,15 @@ return Application::configure(basePath: dirname(__DIR__))
                     'message' => __('api.not_found'),
                     'code' => 'NotFound',
                 ], 404);
+            }
+
+            if ($e instanceof ValidationException) {
+                return response()->json([
+                    'success' => false,
+                    'message' => collect($e->errors())->flatten()->first() ?: $e->getMessage(),
+                    'code' => 'ValidationException',
+                    'errors' => $e->errors(),
+                ], $e->status);
             }
 
             $status = $e instanceof HttpExceptionInterface ? $e->getStatusCode() : 500;

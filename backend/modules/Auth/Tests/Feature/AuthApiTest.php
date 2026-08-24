@@ -22,22 +22,27 @@ class AuthApiTest extends TestCase
             Permission::findOrCreate($permission, 'web');
         }
 
-        Role::findOrCreate('company_admin', 'web');
+        Role::findOrCreate('student', 'web');
         app(ModuleRegistryService::class)->syncFromConfig();
+        Company::query()->create([
+            'name' => 'Demo Academy',
+            'slug' => 'demo-academy',
+            'status' => 'active',
+        ]);
     }
 
     public function test_user_can_register_and_receive_token(): void
     {
         $response = $this->postJson('/api/v1/auth/register', [
-            'name' => 'Academy Owner',
-            'email' => 'owner@academy.test',
+            'name' => 'Learner One',
+            'email' => 'learner@academy.test',
             'password' => 'Password123!',
             'password_confirmation' => 'Password123!',
-            'company_name' => 'Academy One',
         ]);
 
         $response->assertCreated()
             ->assertJsonPath('success', true)
+            ->assertJsonPath('data.user.roles.0', 'student')
             ->assertJsonStructure([
                 'data' => [
                     'token',
@@ -47,8 +52,7 @@ class AuthApiTest extends TestCase
                 ],
             ]);
 
-        $this->assertDatabaseHas('users', ['email' => 'owner@academy.test']);
-        $this->assertDatabaseHas('companies', ['name' => 'Academy One']);
+        $this->assertDatabaseHas('users', ['email' => 'learner@academy.test']);
     }
 
     public function test_user_can_login_with_valid_credentials(): void

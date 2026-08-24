@@ -19,6 +19,7 @@ return [
         'profile_retrieved' => 'ดึงข้อมูลโปรไฟล์สำเร็จ',
         'invalid_credentials' => 'อีเมลหรือรหัสผ่านไม่ถูกต้อง',
         'inactive_account' => 'บัญชีนี้ยังไม่ได้เปิดใช้งาน',
+        'public_school_unavailable' => 'ยังไม่มีโรงเรียนสาธารณะสำหรับสมัครผู้เรียน',
     ],
 
     'tenant' => [
@@ -58,6 +59,7 @@ return [
         'updated' => 'อัปเดตบทบาทสำเร็จ',
         'deleted' => 'ลบบทบาทสำเร็จ',
         'permissions_retrieved' => 'ดึงรายการสิทธิ์สำเร็จ',
+        'system_protected' => 'ไม่สามารถเปลี่ยนชื่อหรือลบบทบาทระบบได้',
     ],
 
     'setting' => [

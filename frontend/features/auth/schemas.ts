@@ -11,7 +11,6 @@ export const registerSchema = z
     name: z.string().min(2, "Name is required"),
     email: z.email("Enter a valid email"),
     phone: z.string().optional(),
-    company_name: z.string().min(2, "Company name is required"),
     password: z.string().min(8, "Password must be at least 8 characters"),
     password_confirmation: z.string().min(8),
   })

@@ -4,6 +4,22 @@ import type { AuthPayload, AuthUser, LoginInput, RegisterInput } from "./schemas
 const TOKEN_KEY = "edulms_token";
 const COMPANY_KEY = "edulms_company_id";
 
+function normalizeUser(user: AuthUser): AuthUser {
+  const nested = user as AuthUser & { data?: AuthUser };
+  const resolved =
+    nested.data && typeof nested.data === "object" && "id" in nested.data && !user.email
+      ? nested.data
+      : user;
+
+  return {
+    ...resolved,
+    roles: Array.isArray(resolved.roles) ? resolved.roles : Object.values(resolved.roles ?? {}),
+    permissions: Array.isArray(resolved.permissions)
+      ? resolved.permissions
+      : Object.values(resolved.permissions ?? {}),
+  };
+}
+
 export function getStoredToken(): string | null {
   if (typeof window === "undefined") return null;
   return localStorage.getItem(TOKEN_KEY);
@@ -36,11 +52,12 @@ export async function loginRequest(input: LoginInput) {
   });
 
   setStoredToken(response.data.token);
-  if (response.data.user.current_company_id) {
-    setStoredCompanyId(response.data.user.current_company_id);
+  const user = normalizeUser(response.data.user);
+  if (user.current_company_id) {
+    setStoredCompanyId(user.current_company_id);
   }
 
-  return response.data;
+  return { ...response.data, user };
 }
 
 export async function registerRequest(input: RegisterInput) {
@@ -50,11 +67,12 @@ export async function registerRequest(input: RegisterInput) {
   });
 
   setStoredToken(response.data.token);
-  if (response.data.user.current_company_id) {
-    setStoredCompanyId(response.data.user.current_company_id);
+  const user = normalizeUser(response.data.user);
+  if (user.current_company_id) {
+    setStoredCompanyId(user.current_company_id);
   }
 
-  return response.data;
+  return { ...response.data, user };
 }
 
 export async function meRequest(token: string) {
@@ -63,7 +81,7 @@ export async function meRequest(token: string) {
     companyId: getStoredCompanyId(),
   });
 
-  return response.data;
+  return { ...response.data, user: normalizeUser(response.data.user) };
 }
 
 export async function logoutRequest(token: string) {

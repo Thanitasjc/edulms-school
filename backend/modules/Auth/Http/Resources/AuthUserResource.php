@@ -22,8 +22,8 @@ class AuthUserResource extends JsonResource
             'current_company_id' => $this->current_company_id,
             'current_company' => $this->whenLoaded('currentCompany', fn () => new CompanyResource($this->currentCompany)),
             'companies' => CompanyResource::collection($this->whenLoaded('companies')),
-            'roles' => $this->getRoleNames(),
-            'permissions' => $this->getAllPermissions()->pluck('name')->values(),
+            'roles' => $this->getRoleNames()->values()->all(),
+            'permissions' => $this->getAllPermissions()->pluck('name')->values()->all(),
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];

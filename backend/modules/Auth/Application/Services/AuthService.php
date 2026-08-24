@@ -6,18 +6,12 @@ use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
-use Modules\Company\Application\Services\CompanyService;
-use Modules\ModuleRegistry\Application\Services\ModuleRegistryService;
+use Modules\Company\Domain\Models\Company;
 use Spatie\Permission\Models\Role;
 use Throwable;
 
 class AuthService
 {
-    public function __construct(
-        private readonly CompanyService $companyService,
-        private readonly ModuleRegistryService $moduleRegistryService
-    ) {}
-
     /**
      * @return array{user: User, token: string}
      *
@@ -50,6 +44,9 @@ class AuthService
     }
 
     /**
+     * Public signup always creates a student on the public school.
+     *
+     * @param  array{name: string, email: string, password: string, phone?: string|null}  $data
      * @return array{user: User, token: string}
      *
      * @throws Throwable
@@ -57,13 +54,7 @@ class AuthService
     public function register(array $data): array
     {
         return DB::transaction(function () use ($data): array {
-            $company = $this->companyService->create([
-                'name' => $data['company_name'],
-                'email' => $data['email'],
-                'status' => 'active',
-                'timezone' => config('app.timezone', 'Asia/Bangkok'),
-                'locale' => 'th',
-            ]);
+            $company = $this->resolvePublicCompany();
 
             /** @var User $user */
             $user = User::query()->create([
@@ -77,10 +68,8 @@ class AuthService
 
             $user->companies()->attach($company->id, ['is_default' => true]);
 
-            $this->moduleRegistryService->enableCoreModulesForCompany((int) $company->id);
-
-            $role = Role::findOrCreate('company_admin', 'web');
-            $user->assignRole($role);
+            $role = Role::findOrCreate('student', 'web');
+            $user->syncRoles([$role]);
 
             $token = $user->createToken('web')->plainTextToken;
             $user->load(['companies', 'currentCompany', 'roles', 'permissions']);
@@ -90,6 +79,32 @@ class AuthService
                 'token' => $token,
             ];
         });
+    }
+
+    private function resolvePublicCompany(): Company
+    {
+        $slug = (string) config('tenancy.public_company_slug', 'demo-academy');
+
+        /** @var Company|null $company */
+        $company = Company::query()
+            ->where('slug', $slug)
+            ->where('status', 'active')
+            ->first();
+
+        if ($company === null) {
+            $company = Company::query()
+                ->where('status', 'active')
+                ->orderBy('id')
+                ->first();
+        }
+
+        if ($company === null) {
+            throw ValidationException::withMessages([
+                'email' => [__('api.auth.public_school_unavailable')],
+            ]);
+        }
+
+        return $company;
     }
 
     public function logout(User $user): void
